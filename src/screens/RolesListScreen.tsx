@@ -1,3 +1,4 @@
+  const ROLES_ENDPOINT = import.meta.env.VITE_API_ROLES || '/roles';
 import React, { useEffect, useState } from 'react';
 import api from '../services/api';
 import Box from '@mui/material/Box';
@@ -50,11 +51,11 @@ const RolesListScreen: React.FC = () => {
     setProcessing(true);
     try {
       const token = localStorage.getItem('token');
-      await api.delete(`/roles/${deleteRoleId}`, {
+      await api.delete(`${ROLES_ENDPOINT}/${deleteRoleId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       // Actualizar lista de roles
-      const response = await api.get('/roles', {
+      const response = await api.get(ROLES_ENDPOINT, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRoles(response.data);
@@ -72,7 +73,7 @@ const RolesListScreen: React.FC = () => {
     const checkToken = async () => {
       const token = localStorage.getItem('token');
       try {
-        await api.get('/roles', {
+        await api.get(ROLES_ENDPOINT, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } catch (err: any) {
@@ -85,7 +86,7 @@ const RolesListScreen: React.FC = () => {
     checkToken();
     const fetchRoles = async () => {
       const token = localStorage.getItem('token');
-      const response = await api.get('/roles', {
+      const response = await api.get(ROLES_ENDPOINT, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setRoles(response.data);

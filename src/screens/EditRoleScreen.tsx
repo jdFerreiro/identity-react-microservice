@@ -24,12 +24,13 @@ const EditRoleScreen: React.FC<EditRoleScreenProps> = ({ id }) => {
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(false);
 
+  const ROLES_ENDPOINT = import.meta.env.VITE_API_ROLES || '/roles';
   useEffect(() => {
     // Token expiration check
     const checkToken = async () => {
       const token = localStorage.getItem('token');
       try {
-        await api.get('/roles', {
+        await api.get(ROLES_ENDPOINT, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } catch (err: any) {
@@ -42,7 +43,7 @@ const EditRoleScreen: React.FC<EditRoleScreenProps> = ({ id }) => {
     checkToken();
     const fetchRole = async () => {
       const token = localStorage.getItem('token');
-      const response = await api.get(`/roles/${id}`, {
+      const response = await api.get(`${ROLES_ENDPOINT}/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setIsActive(response.data.isActive);
@@ -61,7 +62,7 @@ const EditRoleScreen: React.FC<EditRoleScreenProps> = ({ id }) => {
       setProcessing(true);
       const token = localStorage.getItem('token');
       await api.patch(
-        `/roles/${id}`,
+        `${ROLES_ENDPOINT}/${id}`,
         { name: name.trim(), isActive },
         {
           headers: { Authorization: `Bearer ${token}` }

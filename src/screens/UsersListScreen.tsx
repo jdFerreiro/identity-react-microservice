@@ -20,6 +20,7 @@ import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import CreateUserScreen from './CreateUserScreen';
 import EditUserScreen from './EditUserScreen';
+// Si necesitas roles en el grid, usa ROLES_ENDPOINT
 import CircularProgress from '@mui/material/CircularProgress';
 
 const UsersListScreen: React.FC = () => {
@@ -29,6 +30,7 @@ const UsersListScreen: React.FC = () => {
   const [openEdit, setOpenEdit] = useState(false);
   const [editUserId, setEditUserId] = useState<string | null>(null);
   const [users, setUsers] = useState<any[]>([]);
+  const USERS_ENDPOINT = import.meta.env.VITE_API_USERS || '/users';
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
@@ -39,7 +41,7 @@ const UsersListScreen: React.FC = () => {
     const token = localStorage.getItem("token");
     try {
       setProcessing(true);
-      const response = await api.get("/users", {
+      const response = await api.get(USERS_ENDPOINT, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(response.data);
@@ -69,7 +71,7 @@ const UsersListScreen: React.FC = () => {
     if (!userToDelete) return;
     setProcessing(true);
     const token = localStorage.getItem("token");
-    await api.patch(`/users/${userToDelete}`, { isActive: false }, {
+    await api.patch(`${USERS_ENDPOINT}/${userToDelete}`, { isActive: false }, {
       headers: { Authorization: `Bearer ${token}` },
     });
     await fetchUsers();
@@ -80,7 +82,7 @@ const UsersListScreen: React.FC = () => {
   const handleUnblock = async (id: string) => {
     setProcessing(true);
     const token = localStorage.getItem("token");
-    await api.patch(`/users/${id}`, { isActive: true }, {
+    await api.patch(`${USERS_ENDPOINT}/${id}`, { isActive: true }, {
       headers: { Authorization: `Bearer ${token}` },
     });
     await fetchUsers();
@@ -96,7 +98,7 @@ const UsersListScreen: React.FC = () => {
     setProcessing(true);
     const token = localStorage.getItem("token");
     try {
-      await api.delete(`/users/${userToRemove}`, {
+      await api.delete(`${USERS_ENDPOINT}/${userToRemove}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setRemoveSuccess(true);

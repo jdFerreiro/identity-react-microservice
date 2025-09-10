@@ -21,12 +21,14 @@ const CreateUserScreen: React.FC<CreateUserScreenProps> = ({
 }) => {
   // Limpiar el formulario cada vez que se abre el modal
   const [roles, setRoles] = useState<any[]>([]);
+  const USERS_ENDPOINT = import.meta.env.VITE_API_USERS || '/users';
+  const ROLES_ENDPOINT = import.meta.env.VITE_API_ROLES || '/roles';
   useEffect(() => {
     // Token expiration check
     const checkToken = async () => {
       const token = localStorage.getItem('token');
       try {
-        await api.get('/roles', {
+        await api.get(ROLES_ENDPOINT, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } catch (err: any) {
@@ -50,7 +52,7 @@ const CreateUserScreen: React.FC<CreateUserScreenProps> = ({
     const fetchRoles = async () => {
       const token = localStorage.getItem('token');
       try {
-        const response = await api.get('/roles', {
+        const response = await api.get(ROLES_ENDPOINT, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setRoles(response.data);
@@ -137,7 +139,7 @@ const CreateUserScreen: React.FC<CreateUserScreenProps> = ({
     try {
       const token = localStorage.getItem("token");
       await api.post(
-        "/users",
+        USERS_ENDPOINT,
         {
           email: form.email,
           password: form.password,

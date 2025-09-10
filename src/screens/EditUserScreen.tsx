@@ -19,12 +19,14 @@ const EditUserScreen: React.FC<EditUserScreenProps> = ({ id, onSuccess, onCancel
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  const USERS_ENDPOINT = import.meta.env.VITE_API_USERS || '/users';
+  const ROLES_ENDPOINT = import.meta.env.VITE_API_ROLES || '/roles';
   useEffect(() => {
     // Token expiration check
     const checkToken = async () => {
       const token = localStorage.getItem('token');
       try {
-        await api.get('/roles', {
+        await api.get(ROLES_ENDPOINT, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } catch (err: any) {
@@ -37,7 +39,7 @@ const EditUserScreen: React.FC<EditUserScreenProps> = ({ id, onSuccess, onCancel
     checkToken();
     const fetchUser = async () => {
       const token = localStorage.getItem('token');
-      const response = await api.get(`/users/${id}`, {
+      const response = await api.get(`${USERS_ENDPOINT}/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setForm({
@@ -53,7 +55,7 @@ const EditUserScreen: React.FC<EditUserScreenProps> = ({ id, onSuccess, onCancel
     const fetchRoles = async () => {
       const token = localStorage.getItem('token');
       try {
-        const response = await api.get('/roles', {
+        const response = await api.get(ROLES_ENDPOINT, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setRoles(response.data);
@@ -100,7 +102,7 @@ const EditUserScreen: React.FC<EditUserScreenProps> = ({ id, onSuccess, onCancel
       if (form.password) {
         payload.password = form.password;
       }
-      await api.patch(`/users/${id}`, payload, {
+      await api.patch(`${USERS_ENDPOINT}/${id}`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSuccess(true);

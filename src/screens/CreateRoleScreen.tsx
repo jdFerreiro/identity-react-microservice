@@ -10,12 +10,13 @@ const CreateRoleScreen: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [processing, setProcessing] = useState(false);
 
+  const ROLES_ENDPOINT = import.meta.env.VITE_API_ROLES || '/roles';
   useEffect(() => {
     // Token expiration check
     const checkToken = async () => {
       const token = localStorage.getItem('token');
       try {
-        await api.get('/roles', {
+        await api.get(ROLES_ENDPOINT, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } catch (err: any) {
@@ -39,7 +40,7 @@ const CreateRoleScreen: React.FC = () => {
     try {
       setProcessing(true);
       const token = localStorage.getItem('token');
-      await api.post('/roles', { name: name.trim() }, {
+      await api.post(ROLES_ENDPOINT, { name: name.trim() }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setSuccess('Rol creado correctamente');
