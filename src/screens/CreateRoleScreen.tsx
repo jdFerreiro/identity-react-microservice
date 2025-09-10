@@ -1,10 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Box, Typography, TextField, Button, Alert } from '@mui/material';
 
 const CreateRoleScreen: React.FC = () => {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    // Token expiration check
+    const checkToken = async () => {
+      const token = localStorage.getItem('token');
+      try {
+        await api.get('/roles', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (err: any) {
+        if (err?.response?.status === 401 || err?.response?.status === 403) {
+          localStorage.removeItem('token');
+          window.location.href = '/';
+        }
+      }
+    };
+    checkToken();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

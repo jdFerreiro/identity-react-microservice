@@ -9,6 +9,21 @@ const EditRoleScreen: React.FC = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    // Token expiration check
+    const checkToken = async () => {
+      const token = localStorage.getItem('token');
+      try {
+        await api.get('/roles', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (err: any) {
+        if (err?.response?.status === 401 || err?.response?.status === 403) {
+          localStorage.removeItem('token');
+          window.location.href = '/';
+        }
+      }
+    };
+    checkToken();
     const fetchRole = async () => {
       const token = localStorage.getItem('token');
       const response = await api.get(`/roles/${id}`, {

@@ -5,6 +5,21 @@ import { Box, Typography, List, ListItem, ListItemText } from '@mui/material';
 const RolesListScreen: React.FC = () => {
   const [roles, setRoles] = useState<any[]>([]);
   useEffect(() => {
+    // Token expiration check
+    const checkToken = async () => {
+      const token = localStorage.getItem('token');
+      try {
+        await api.get('/roles', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (err: any) {
+        if (err?.response?.status === 401 || err?.response?.status === 403) {
+          localStorage.removeItem('token');
+          window.location.href = '/';
+        }
+      }
+    };
+    checkToken();
     const fetchRoles = async () => {
       const token = localStorage.getItem('token');
       const response = await api.get('/roles', {
