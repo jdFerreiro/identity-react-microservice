@@ -1,7 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../services/api';
-import { Box, Typography, Checkbox, FormControlLabel, Button, Alert } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Checkbox,
+  FormControlLabel,
+  Button,
+  Alert,
+  Stack
+} from '@mui/material';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 const EditRoleScreen: React.FC = () => {
   const { id } = useParams();
@@ -38,9 +48,13 @@ const EditRoleScreen: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await api.patch(`/roles/${id}`, { isActive }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.patch(
+        `/roles/${id}`,
+        { isActive },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
       window.location.href = `/roles/${id}`;
     } catch (err: any) {
       setError('Error al actualizar rol');
@@ -48,18 +62,52 @@ const EditRoleScreen: React.FC = () => {
   };
 
   return (
-    <Box maxWidth={400} mx="auto" mt={4} p={3} boxShadow={3} borderRadius={2} bgcolor="#fff">
-      <Typography variant="h5" mb={2}>Editar Rol</Typography>
+    <Box
+      maxWidth={400}
+      mx="auto"
+      mt={4}
+      p={3}
+      boxShadow={3}
+      borderRadius={2}
+      bgcolor="#fff"
+    >
+      <Typography variant="h5" mb={2}>
+        Editar Rol
+      </Typography>
       <form onSubmit={handleSubmit}>
         <FormControlLabel
-          control={<Checkbox checked={isActive} onChange={e => setIsActive(e.target.checked)} />}
+          control={
+            <Checkbox
+              checked={isActive}
+              onChange={e => setIsActive(e.target.checked)}
+            />
+          }
           label="Activo"
         />
-        <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
-          Guardar
-        </Button>
+        <Stack direction="row" spacing={2} justifyContent="flex-end" mt={2}>
+          <Button
+            type="button"
+            variant="outlined"
+            sx={{ minWidth: 150, color: '#9c27b0', borderColor: '#9c27b0', fontWeight: 'bold' }}
+            onClick={() => window.location.href = '/roles'}
+          >
+            CANCELAR
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            sx={{ minWidth: 150, fontWeight: 'bold' }}
+            color="primary"
+          >
+            GUARDAR
+          </Button>
+        </Stack>
       </form>
-      {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mt: 2 }}>
+          {error}
+        </Alert>
+      )}
     </Box>
   );
 };

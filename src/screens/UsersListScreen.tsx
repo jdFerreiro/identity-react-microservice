@@ -7,6 +7,7 @@ import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import BlockIcon from '@mui/icons-material/Block';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
@@ -16,10 +17,13 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
 import CreateUserScreen from './CreateUserScreen';
 import EditUserScreen from './EditUserScreen';
+import CircularProgress from '@mui/material/CircularProgress';
 
 const UsersListScreen: React.FC = () => {
+  const [processing, setProcessing] = useState(false);
   const navigate = useNavigate();
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
@@ -27,10 +31,14 @@ const UsersListScreen: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+  const [userToRemove, setUserToRemove] = useState<string | null>(null);
+  const [removeSuccess, setRemoveSuccess] = useState(false);
 
   const fetchUsers = async () => {
     const token = localStorage.getItem("token");
     try {
+      setProcessing(true);
       const response = await api.get("/users", {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -40,6 +48,8 @@ const UsersListScreen: React.FC = () => {
         localStorage.removeItem("token");
         navigate("/");
       }
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -57,22 +67,48 @@ const UsersListScreen: React.FC = () => {
   };
   const confirmBlockUser = async () => {
     if (!userToDelete) return;
+    setProcessing(true);
     const token = localStorage.getItem("token");
     await api.patch(`/users/${userToDelete}`, { isActive: false }, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setUsers(users.map(u => u.id === userToDelete ? { ...u, isActive: false } : u));
+    await fetchUsers();
     setConfirmDeleteOpen(false);
     setUserToDelete(null);
+    setProcessing(false);
   };
   const handleUnblock = async (id: string) => {
+    setProcessing(true);
     const token = localStorage.getItem("token");
     await api.patch(`/users/${id}`, { isActive: true }, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setUsers(users.map(u => u.id === id ? { ...u, isActive: true } : u));
+    await fetchUsers();
+    setProcessing(false);
   };
   const handleCreate = () => setOpenCreate(true);
+  const handleRemove = (id: string) => {
+    setUserToRemove(id);
+    setConfirmRemoveOpen(true);
+  };
+  const confirmRemoveUser = async () => {
+    if (!userToRemove) return;
+    setProcessing(true);
+    const token = localStorage.getItem("token");
+    try {
+      await api.delete(`/users/${userToRemove}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRemoveSuccess(true);
+      await fetchUsers();
+    } catch (err) {
+      // Puedes mostrar un error aquí si lo deseas
+    }
+    setConfirmRemoveOpen(false);
+    setUserToRemove(null);
+    setProcessing(false);
+    setTimeout(() => setRemoveSuccess(false), 1500);
+  };
 
   const columns: GridColDef[] = [
     { field: 'email', headerName: 'Email', flex: 2 },
@@ -87,7 +123,7 @@ const UsersListScreen: React.FC = () => {
       sortable: false,
       filterable: false,
       renderCell: (params) => (
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={0.1}>
           <Tooltip title="Editar">
             <IconButton color="primary" onClick={() => handleEdit(params.row.id)}>
               <EditIcon />
@@ -106,14 +142,52 @@ const UsersListScreen: React.FC = () => {
               </IconButton>
             </Tooltip>
           )}
+          <Tooltip title="Eliminar">
+            <IconButton color="warning" onClick={() => handleRemove(params.row.id)}>
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
         </Stack>
       ),
     },
   ];
 
   return (
-    <Box width="100vw" minHeight="100vh" bgcolor="#f5f5f5" p={3} display="flex" flexDirection="column" alignItems="center">
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3} width="100%" maxWidth={1200}>
+    <Box
+      width="100vw"
+      height="100vh"
+      bgcolor="#f5f5f5"
+      p={3}
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      sx={{ boxSizing: 'border-box', overflow: 'hidden', position: 'relative' }}
+    >
+      {processing && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            bgcolor: 'rgba(255,255,255,0.7)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'auto',
+          }}
+        >
+          <CircularProgress size={70} color="primary" thickness={5} />
+        </Box>
+      )}
+      {removeSuccess && (
+        <Box sx={{ position: 'fixed', top: 80, right: 40, zIndex: 9999 }}>
+          <Alert severity="success">Usuario eliminado correctamente</Alert>
+        </Box>
+      )}
+      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3} width="100%" maxWidth={1200} sx={{ boxSizing: 'border-box' }}>
         <Stack direction="column">
           <Typography variant="h4">Mantenimiento de Usuarios</Typography>
         </Stack>
@@ -127,7 +201,12 @@ const UsersListScreen: React.FC = () => {
       </Stack>
 
       {/* Dialog para crear usuario */}
-      <Dialog open={openCreate} onClose={() => setOpenCreate(false)} maxWidth="md" fullWidth
+      <Dialog
+        open={openCreate}
+        onClose={() => setOpenCreate(false)}
+        maxWidth="md"
+        fullWidth
+        disableEscapeKeyDown
         sx={{
           '& .MuiDialog-paper': {
             width: '50vw',
@@ -136,7 +215,7 @@ const UsersListScreen: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-          }
+          },
         }}
       >
         <DialogTitle>Crear Usuario</DialogTitle>
@@ -146,7 +225,12 @@ const UsersListScreen: React.FC = () => {
       </Dialog>
 
       {/* Dialog para editar usuario */}
-      <Dialog open={openEdit} onClose={() => setOpenEdit(false)} maxWidth="md" fullWidth
+      <Dialog
+        open={openEdit}
+        onClose={() => setOpenEdit(false)}
+        maxWidth="md"
+        fullWidth
+        disableEscapeKeyDown
         sx={{
           '& .MuiDialog-paper': {
             width: '50vw',
@@ -155,49 +239,74 @@ const UsersListScreen: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-          }
+          },
         }}
       >
         <DialogTitle>Editar Usuario</DialogTitle>
         <DialogContent sx={{ width: '90%', height: '100%' }}>
-          {editUserId && <EditUserScreen id={editUserId} onSuccess={() => { setOpenEdit(false); fetchUsers(); }} onCancel={() => setOpenEdit(false)} />}
+          {editUserId && <EditUserScreen id={editUserId} onSuccess={() => { setOpenEdit(false); fetchUsers(); }} onCancel={() => setOpenEdit(false)} setProcessing={setProcessing} />}
         </DialogContent>
       </Dialog>
 
-      <DataGrid
-        rows={users}
-        columns={columns}
-        getRowId={(row) => row.id}
-        initialState={{
-          pagination: {
-            paginationModel: { pageSize: 10, page: 0 },
-          },
-        }}
-        pageSizeOptions={[10, 20, 50]}
-        sx={{
-          width: '100%',
-          maxWidth: 1200,
-          background: '#fff',
-          '& .MuiDataGrid-columnHeader': {
-            fontWeight: 'bold',
-          },
-          '& .MuiDataGrid-columnHeaderTitle': {
-            fontWeight: 'bold',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
+      <Box width="100%" maxWidth={1200} mx="auto" flex={1} sx={{ boxSizing: 'border-box', overflow: 'auto', height: 'calc(100vh - 120px)' }}>
+        <DataGrid
+          rows={users}
+          columns={columns}
+          getRowId={(row) => row.id}
+          initialState={{
+            pagination: {
+              paginationModel: { pageSize: 10, page: 0 },
+            },
+          }}
+          pageSizeOptions={[10, 20, 50]}
+          sx={{
             width: '100%',
-          },
-        }}
-      />
+            minHeight: '60vh',
+            maxHeight: '100%',
+            background: '#fff',
+            maxWidth: 1200,
+            margin: '0 auto',
+            boxSizing: 'border-box',
+            overflow: 'auto',
+            '& .MuiDataGrid-columnHeader': {
+              fontWeight: 'bold',
+            },
+            '& .MuiDataGrid-columnHeaderTitle': {
+              fontWeight: 'bold',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: '100%',
+            },
+          }}
+        />
+      </Box>
 
       {/* Dialogo de confirmación para bloquear usuario */}
-      <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
+      <Dialog
+        open={confirmDeleteOpen}
+        onClose={() => setConfirmDeleteOpen(false)}
+        disableEscapeKeyDown
+      >
         <DialogTitle>¿Desea bloquear este usuario?</DialogTitle>
         <DialogContent>El usuario no podrá iniciar sesión hasta que sea desbloqueado.</DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDeleteOpen(false)} color="primary">No</Button>
           <Button onClick={confirmBlockUser} color="error">Sí</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialogo de confirmación para eliminar usuario */}
+      <Dialog
+        open={confirmRemoveOpen}
+        onClose={() => setConfirmRemoveOpen(false)}
+        disableEscapeKeyDown
+      >
+        <DialogTitle>¿Desea eliminar este usuario?</DialogTitle>
+        <DialogContent>Esta acción no se puede deshacer.</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmRemoveOpen(false)} color="primary">No</Button>
+          <Button onClick={confirmRemoveUser} color="error">Sí</Button>
         </DialogActions>
       </Dialog>
     </Box>

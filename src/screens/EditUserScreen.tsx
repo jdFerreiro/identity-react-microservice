@@ -2,14 +2,17 @@ import React, { useEffect, useState } from 'react';
 // Eliminado import no usado
 import api from '../services/api';
 import { Box, Typography, Checkbox, FormControlLabel, Button, Alert, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 interface EditUserScreenProps {
   id: string;
   onSuccess?: () => void;
   onCancel?: () => void;
+  setProcessing?: (value: boolean) => void;
 }
 
-const EditUserScreen: React.FC<EditUserScreenProps> = ({ id, onSuccess, onCancel }) => {
+const EditUserScreen: React.FC<EditUserScreenProps> = ({ id, onSuccess, onCancel, setProcessing }) => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [form, setForm] = useState({ email: '', firstName: '', lastName: '', password: '', confirmPassword: '', isActive: false, roleId: '' });
   const [roles, setRoles] = useState<any[]>([]);
@@ -84,6 +87,7 @@ const EditUserScreen: React.FC<EditUserScreenProps> = ({ id, onSuccess, onCancel
       setError('Las contraseñas no coinciden');
       return;
     }
+  if (typeof setProcessing === 'function') setProcessing(true);
     try {
       const token = localStorage.getItem('token');
       const payload: any = {
@@ -102,10 +106,12 @@ const EditUserScreen: React.FC<EditUserScreenProps> = ({ id, onSuccess, onCancel
       setSuccess(true);
       setError('');
       setTimeout(() => {
-        setSuccess(false);
-        if (onSuccess) onSuccess();
+  setSuccess(false);
+  if (typeof setProcessing === 'function') setProcessing(false);
+  if (onSuccess) onSuccess();
       }, 1200);
     } catch (err: any) {
+      if (typeof setProcessing === 'function') setProcessing(false);
       if (err?.response?.data?.message) {
         setError(`Error: ${err.response.data.message}`);
       } else {
@@ -180,11 +186,25 @@ const EditUserScreen: React.FC<EditUserScreenProps> = ({ id, onSuccess, onCancel
             control={<Checkbox checked={form.isActive} onChange={e => setForm({ ...form, isActive: e.target.checked })} />}
             label="Activo"
           />
-          <Box display="flex" gap={2} mt={2}>
-            <Button type="submit" variant="contained" color="primary" fullWidth>
+          <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
+            <Button
+              variant="contained"
+              color="primary"
+              type="submit"
+              size="medium"
+              startIcon={<SaveIcon />}
+              sx={{ minWidth: 120 }}
+            >
               Guardar
             </Button>
-            <Button type="button" variant="outlined" color="secondary" fullWidth onClick={() => setConfirmOpen(true)}>
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={() => setConfirmOpen(true)}
+              size="medium"
+              startIcon={<CancelIcon />}
+              sx={{ minWidth: 120 }}
+            >
               Cancelar
             </Button>
           </Box>

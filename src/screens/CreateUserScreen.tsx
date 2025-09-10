@@ -6,6 +6,9 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
+
 
 interface CreateUserScreenProps {
   onSuccess?: () => void;
@@ -161,7 +164,9 @@ const CreateUserScreen: React.FC<CreateUserScreenProps> = ({
         if (onSuccess) onSuccess();
       }, 1200);
     } catch (err: any) {
-      if (err?.response?.data?.message) {
+      if (err?.response?.status === 400 && err?.response?.data?.message?.toLowerCase().includes('correo')) {
+        setErrors({ general: 'El correo electrónico ya está registrado.' });
+      } else if (err?.response?.data?.message) {
         setErrors({ general: `Error: ${err.response.data.message}` });
       } else {
         setErrors({
@@ -193,13 +198,9 @@ const CreateUserScreen: React.FC<CreateUserScreenProps> = ({
           onChange={handleInputChange}
           fullWidth
           margin="normal"
-          autoComplete="off"
+          autoComplete="email"
           error={!!errors.email}
           helperText={errors.email}
-          InputProps={{
-            style:
-              errors.email === "" && form.email ? { borderColor: "green" } : {},
-          }}
         />
         <TextField
           name="password"
@@ -212,12 +213,6 @@ const CreateUserScreen: React.FC<CreateUserScreenProps> = ({
           autoComplete="new-password"
           error={!!errors.password}
           helperText={errors.password}
-          InputProps={{
-            style:
-              errors.password === "" && form.password
-                ? { borderColor: "green" }
-                : {},
-          }}
         />
         <TextField
           name="confirmPassword"
@@ -230,12 +225,6 @@ const CreateUserScreen: React.FC<CreateUserScreenProps> = ({
           autoComplete="new-password"
           error={!!errors.confirmPassword}
           helperText={errors.confirmPassword}
-          InputProps={{
-            style:
-              errors.confirmPassword === "" && form.confirmPassword
-                ? { borderColor: "green" }
-                : {},
-          }}
         />
         <TextField
           name="firstName"
@@ -248,12 +237,6 @@ const CreateUserScreen: React.FC<CreateUserScreenProps> = ({
           autoComplete="off"
           error={!!errors.firstName}
           helperText={errors.firstName}
-          InputProps={{
-            style:
-              errors.firstName === "" && form.firstName
-                ? { borderColor: "green" }
-                : {},
-          }}
         />
         <TextField
           name="lastName"
@@ -266,12 +249,6 @@ const CreateUserScreen: React.FC<CreateUserScreenProps> = ({
           autoComplete="off"
           error={!!errors.lastName}
           helperText={errors.lastName}
-          InputProps={{
-            style:
-              errors.lastName === "" && form.lastName
-                ? { borderColor: "green" }
-                : {},
-          }}
         />
         <FormControl fullWidth margin="normal" error={!!errors.roleId}>
           <InputLabel id="role-label">Rol</InputLabel>
@@ -290,22 +267,33 @@ const CreateUserScreen: React.FC<CreateUserScreenProps> = ({
           </Select>
           {errors.roleId && <Box color="error.main" fontSize={12} mt={0.5}>{errors.roleId}</Box>}
         </FormControl>
-        <Box display="flex" gap={2} mt={2}>
-          <Button type="submit" variant="contained" color="primary" fullWidth>
-            Crear
+        <Box display="flex" justifyContent="flex-end" gap={2} mt={2}>
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
+            size="medium"
+            startIcon={<SaveIcon />}
+            sx={{ minWidth: 120 }}
+          >
+            Guardar
           </Button>
           <Button
-            type="button"
             variant="outlined"
-            color="secondary"
-            fullWidth
+            color="error"
             onClick={() => setConfirmOpen(true)}
+            size="medium"
+            startIcon={<CancelIcon />}
+            sx={{ minWidth: 120 }}
           >
             Cancelar
           </Button>
         </Box>
       </form>
-
+      {/* Mostrar error general al final */}
+      {errors.general && (
+        <Alert severity="error" sx={{ mt: 2 }}>{errors.general}</Alert>
+      )}
       {/* Dialogo de confirmación para cancelar */}
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <DialogTitle>¿Desea cerrar el formulario?</DialogTitle>
