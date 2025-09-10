@@ -11,15 +11,23 @@ import BlockIcon from '@mui/icons-material/Block';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import Stack from "@mui/material/Stack";
-// import { useNavigate } from "react-router-dom";
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
 import CreateUserScreen from './CreateUserScreen';
 import EditUserScreen from './EditUserScreen';
 
 const UsersListScreen: React.FC = () => {
   const navigate = useNavigate();
+  const [openCreate, setOpenCreate] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+
   const fetchUsers = async () => {
     const token = localStorage.getItem("token");
     try {
@@ -34,21 +42,28 @@ const UsersListScreen: React.FC = () => {
       }
     }
   };
-  const [openCreate, setOpenCreate] = useState(false);
-  const [openEdit, setOpenEdit] = useState(false);
-  const [editUserId, setEditUserId] = useState<string | null>(null);
-  const [users, setUsers] = useState<any[]>([]);
-  // const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   const handleEdit = (id: string) => {
     setEditUserId(id);
     setOpenEdit(true);
   };
-  const handleBlock = async (id: string) => {
+  const handleBlock = (id: string) => {
+    setUserToDelete(id);
+    setConfirmDeleteOpen(true);
+  };
+  const confirmBlockUser = async () => {
+    if (!userToDelete) return;
     const token = localStorage.getItem("token");
-    await api.patch(`/users/${id}`, { isActive: false }, {
+    await api.patch(`/users/${userToDelete}`, { isActive: false }, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setUsers(users.map(u => u.id === id ? { ...u, isActive: false } : u));
+    setUsers(users.map(u => u.id === userToDelete ? { ...u, isActive: false } : u));
+    setConfirmDeleteOpen(false);
+    setUserToDelete(null);
   };
   const handleUnblock = async (id: string) => {
     const token = localStorage.getItem("token");
@@ -58,6 +73,7 @@ const UsersListScreen: React.FC = () => {
     setUsers(users.map(u => u.id === id ? { ...u, isActive: true } : u));
   };
   const handleCreate = () => setOpenCreate(true);
+
   const columns: GridColDef[] = [
     { field: 'email', headerName: 'Email', flex: 2 },
     { field: 'firstName', headerName: 'Nombre', flex: 2 },
@@ -94,12 +110,9 @@ const UsersListScreen: React.FC = () => {
       ),
     },
   ];
-  useEffect(() => {
-  fetchUsers();
-  }, []);
 
   return (
-  <Box width="100vw" minHeight="100vh" bgcolor="#f5f5f5" p={3} display="flex" flexDirection="column" alignItems="center">
+    <Box width="100vw" minHeight="100vh" bgcolor="#f5f5f5" p={3} display="flex" flexDirection="column" alignItems="center">
       <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3} width="100%" maxWidth={1200}>
         <Stack direction="column">
           <Typography variant="h4">Mantenimiento de Usuarios</Typography>
@@ -112,6 +125,7 @@ const UsersListScreen: React.FC = () => {
           </Tooltip>
         </Stack>
       </Stack>
+
       {/* Dialog para crear usuario */}
       <Dialog open={openCreate} onClose={() => setOpenCreate(false)} maxWidth="md" fullWidth
         sx={{
@@ -149,6 +163,7 @@ const UsersListScreen: React.FC = () => {
           {editUserId && <EditUserScreen id={editUserId} onSuccess={() => { setOpenEdit(false); fetchUsers(); }} onCancel={() => setOpenEdit(false)} />}
         </DialogContent>
       </Dialog>
+
       <DataGrid
         rows={users}
         columns={columns}
@@ -175,6 +190,16 @@ const UsersListScreen: React.FC = () => {
           },
         }}
       />
+
+      {/* Dialogo de confirmación para bloquear usuario */}
+      <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
+        <DialogTitle>¿Desea bloquear este usuario?</DialogTitle>
+        <DialogContent>El usuario no podrá iniciar sesión hasta que sea desbloqueado.</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDeleteOpen(false)} color="primary">No</Button>
+          <Button onClick={confirmBlockUser} color="error">Sí</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

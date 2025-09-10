@@ -44,7 +44,7 @@ const EditUserScreen: React.FC<EditUserScreenProps> = ({ id, onSuccess, onCancel
         password: '',
         confirmPassword: '',
         isActive: response.data.isActive || false,
-        roleId: response.data.roleId || '',
+        roleId: response.data.role?.id || '',
       });
     };
     const fetchRoles = async () => {
@@ -171,7 +171,7 @@ const EditUserScreen: React.FC<EditUserScreenProps> = ({ id, onSuccess, onCancel
               >
                 <MenuItem value=""><em>Seleccione un rol</em></MenuItem>
                 {roles.map(role => (
-                  <MenuItem key={role.id} value={role.id} selected={role.id === form.roleId}>{role.name}</MenuItem>
+                  <MenuItem key={role.id} value={role.id}>{role.name}</MenuItem>
                 ))}
               </Select>
             </FormControl>
