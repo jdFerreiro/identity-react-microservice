@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import api from '../services/api';
 import {
   Box,
@@ -8,15 +7,22 @@ import {
   FormControlLabel,
   Button,
   Alert,
-  Stack
+  Stack,
+  TextField,
+  CircularProgress
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 
-const EditRoleScreen: React.FC = () => {
-  const { id } = useParams();
+interface EditRoleScreenProps {
+  id: string;
+}
+
+const EditRoleScreen: React.FC<EditRoleScreenProps> = ({ id }) => {
   const [isActive, setIsActive] = useState(false);
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     // Token expiration check
@@ -40,41 +46,82 @@ const EditRoleScreen: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setIsActive(response.data.isActive);
+      setName(response.data.name || '');
     };
     fetchRole();
   }, [id]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!name.trim()) {
+      setError('El nombre es obligatorio');
+      return;
+    }
     try {
+      setProcessing(true);
       const token = localStorage.getItem('token');
       await api.patch(
         `/roles/${id}`,
-        { isActive },
+        { name: name.trim(), isActive },
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
-      window.location.href = `/roles/${id}`;
+      window.location.href = '/roles';
     } catch (err: any) {
       setError('Error al actualizar rol');
+    } finally {
+      setProcessing(false);
     }
   };
 
   return (
     <Box
-      maxWidth={400}
+      width="100%"
+      maxWidth={500}
       mx="auto"
       mt={4}
       p={3}
       boxShadow={3}
       borderRadius={2}
       bgcolor="#fff"
+      sx={{ overflowX: 'hidden', border: '1px solid #e0e0e0', boxShadow: 3, position: 'relative' }}
     >
+      {processing && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            bgcolor: 'rgba(255,255,255,0.7)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'auto',
+          }}
+        >
+          <CircularProgress size={70} color="primary" thickness={5} />
+        </Box>
+      )}
       <Typography variant="h5" mb={2}>
         Editar Rol
       </Typography>
       <form onSubmit={handleSubmit}>
+        <Typography variant="subtitle1" mb={1}>Nombre del Rol</Typography>
+        <Box mb={2}>
+          <TextField
+            type="text"
+            label="Nombre"
+            value={name}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+            fullWidth
+            margin="normal"
+            autoComplete="off"
+          />
+        </Box>
         <FormControlLabel
           control={
             <Checkbox
@@ -86,20 +133,25 @@ const EditRoleScreen: React.FC = () => {
         />
         <Stack direction="row" spacing={2} justifyContent="flex-end" mt={2}>
           <Button
-            type="button"
-            variant="outlined"
-            sx={{ minWidth: 150, color: '#9c27b0', borderColor: '#9c27b0', fontWeight: 'bold' }}
-            onClick={() => window.location.href = '/roles'}
-          >
-            CANCELAR
-          </Button>
-          <Button
             type="submit"
             variant="contained"
-            sx={{ minWidth: 150, fontWeight: 'bold' }}
             color="primary"
+            size="medium"
+            startIcon={<SaveIcon />}
+            sx={{ minWidth: 120, fontWeight: 'bold' }}
           >
-            GUARDAR
+            Guardar
+          </Button>
+          <Button
+            type="button"
+            variant="outlined"
+            color="error"
+            size="medium"
+            startIcon={<CancelIcon />}
+            sx={{ minWidth: 120, fontWeight: 'bold' }}
+            onClick={() => window.location.href = '/roles'}
+          >
+            Cancelar
           </Button>
         </Stack>
       </form>

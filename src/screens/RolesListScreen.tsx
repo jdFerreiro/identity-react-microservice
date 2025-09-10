@@ -6,36 +6,66 @@ import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Alert from '@mui/material/Alert';
-import TextField from '@mui/material/TextField';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import CreateRoleScreen from './CreateRoleScreen';
+import EditRoleScreen from './EditRoleScreen';
 
 const RolesListScreen: React.FC = () => {
-  // Estado global para spinner de pantalla completa
   const [processing, setProcessing] = useState(false);
-  // ...existing code...
   const [roles, setRoles] = useState<any[]>([]);
-  const [deleteRoleId, setDeleteRoleId] = useState<string | null>(null);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
-  const [editRoleId, setEditRoleId] = useState<string | null>(null);
-  const [roleName, setRoleName] = useState('');
-  const [roleNameError, setRoleNameError] = useState('');
-  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
-  const [formSuccess, setFormSuccess] = useState('');
-  const [formError, setFormError] = useState('');
-  const [roleActive, setRoleActive] = useState(true);
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  // Overlay spinner para procesos
-  // El spinner global depende de processing
+    const [deleteRoleId, setDeleteRoleId] = useState<string | null>(null);
+    const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+    const [openCreateDialog, setOpenCreateDialog] = useState(false);
+    const [openEditDialog, setOpenEditDialog] = useState(false);
+    const [editRoleId, setEditRoleId] = useState<string | null>(null);
+  const handleAdd = () => {
+    setOpenCreateDialog(true);
+  };
+
+  const handleEdit = (role: any) => {
+    setEditRoleId(role.id);
+    setOpenEditDialog(true);
+  };
+
+  const handleDelete = (id: string) => {
+    setDeleteRoleId(id);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleDeleteDialogClose = () => {
+    setOpenDeleteDialog(false);
+    setDeleteRoleId(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteRoleId) return;
+    setProcessing(true);
+    try {
+      const token = localStorage.getItem('token');
+      await api.delete(`/roles/${deleteRoleId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Actualizar lista de roles
+      const response = await api.get('/roles', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRoles(response.data);
+    } catch (err) {
+      // Puedes agregar manejo de error aquí si lo deseas
+    } finally {
+      setProcessing(false);
+      setOpenDeleteDialog(false);
+      setDeleteRoleId(null);
+    }
+  };
 
   useEffect(() => {
     // Token expiration check
@@ -89,116 +119,14 @@ const RolesListScreen: React.FC = () => {
     },
   ];
 
-  const handleAdd = () => {
-  setDialogMode('create');
-  setRoleName('');
-  setRoleActive(true);
-  setOpenDialog(true);
-  };
 
-  const handleEdit = (role: any) => {
-  console.log('Editando rol, id:', role.id);
-  setDialogMode('edit');
-  setEditRoleId(role.id);
-  setRoleName(role.name);
-  setRoleActive(role.isActive);
-  setOpenDialog(true);
-  };
 
-  const handleDelete = (id: string) => {
-  setDeleteRoleId(id);
-  setOpenDeleteDialog(true);
-  };
 
-  const handleDialogClose = () => {
-    if (roleName) {
-      setConfirmCancelOpen(true);
-    } else {
-      setOpenDialog(false);
-    }
-  };
 
-  const handleCancelConfirm = () => {
-    setConfirmCancelOpen(false);
-    setOpenDialog(false);
-    setRoleName('');
-    setRoleNameError('');
-    setFormError('');
-    setFormSuccess('');
-  };
 
-  const handleCancelReject = () => {
-    setConfirmCancelOpen(false);
-  };
 
-  const handleDeleteDialogClose = () => {
-  setOpenDeleteDialog(false);
-  setDeleteRoleId(null);
-  };
 
-  const handleDialogSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setRoleNameError('');
-    setFormError('');
-    if (!roleName.trim()) {
-      setRoleNameError('El nombre es obligatorio');
-      return;
-    }
-    setProcessing(true);
-    try {
-      const token = localStorage.getItem('token');
-      if (dialogMode === 'create') {
-        await api.post('/roles', { name: roleName.trim(), isActive: true }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setFormSuccess('Rol creado correctamente');
-      } else if (editRoleId) {
-        await api.patch(`/roles/${editRoleId}`, { name: roleName.trim(), isActive: roleActive }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setFormSuccess('Rol actualizado correctamente');
-      }
-      // Actualizar lista de roles
-      const response = await api.get('/roles', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setRoles(response.data);
-      // Esperar un poco para mostrar el mensaje y el spinner
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      setOpenDialog(false);
-      setFormSuccess('');
-      setRoleName('');
-      setRoleNameError('');
-      setFormError('');
-      setEditRoleId(null);
-    } catch (err: any) {
-      setFormError('No se pudo guardar el rol. Intente nuevamente.');
-    } finally {
-      setProcessing(false);
-    }
-  };
 
-  const handleDeleteConfirm = async () => {
-    if (!deleteRoleId) return;
-    setProcessing(true);
-    try {
-      const token = localStorage.getItem('token');
-      await api.delete(`/roles/${deleteRoleId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      // Actualizar lista de roles
-      const response = await api.get('/roles', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setRoles(response.data);
-    } catch (err) {
-      // Puedes agregar manejo de error aquí si lo deseas
-    } finally {
-      setProcessing(false);
-      setOpenDeleteDialog(false);
-      setDeleteRoleId(null);
-    }
-  };
 
   return (
     <Box width="100vw" height="100vh" bgcolor="#f5f5f5" p={3} display="flex" flexDirection="column" alignItems="center" sx={{ boxSizing: 'border-box', overflow: 'hidden', position: 'relative' }}>
@@ -262,13 +190,10 @@ const RolesListScreen: React.FC = () => {
           }}
         />
       </Box>
-
-      {/* Create/Edit Dialog */}
+      {/* Dialog para crear rol */}
       <Dialog
-        open={openDialog}
-        onClose={(_unused, reason) => {
-          if (reason !== 'backdropClick' && reason !== 'escapeKeyDown') handleDialogClose();
-        }}
+        open={openCreateDialog}
+        onClose={() => setOpenCreateDialog(false)}
         maxWidth="md"
         fullWidth
         disableEscapeKeyDown
@@ -283,62 +208,34 @@ const RolesListScreen: React.FC = () => {
           },
         }}
       >
-        <DialogTitle sx={{ textAlign: 'center', mb: 1 }}>{dialogMode === 'create' ? 'Agregar Rol' : 'Editar Rol'}</DialogTitle>
-        <DialogContent sx={{ width: '100%', maxWidth: 500, mx: 'auto', p: 2 }}>
-          <Box
-            width="100%"
-            maxWidth="500px"
-            margin="0 auto"
-            bgcolor="#fff"
-            boxShadow={3}
-            borderRadius={2}
-            sx={{ border: '1px solid #e0e0e0', p: 3, boxSizing: 'border-box', overflowX: 'hidden' }}
-          >
-            <Box component="form" autoComplete="off" sx={{ width: '100%' }} onSubmit={handleDialogSubmit}>
-              <TextField
-                label="Nombre"
-                value={roleName}
-                onChange={e => setRoleName(e.target.value)}
-                fullWidth
-                margin="normal"
-                error={!!roleNameError}
-                helperText={roleNameError}
-              />
-              {formError && <Alert severity="error" sx={{ mt: 2 }}>{formError}</Alert>}
-              {formSuccess && <Alert severity="success" sx={{ mt: 2 }}>{formSuccess}</Alert>}
-              <Box display="flex" gap={2} mt={2}>
-                <Button
-                  type="button"
-                  variant="outlined"
-                  color="secondary"
-                  fullWidth
-                  onClick={handleDialogClose}
-                  disabled={processing}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  disabled={processing}
-                >
-                  {dialogMode === 'create' ? 'Agregar' : 'Guardar'}
-                </Button>
-              </Box>
-            </Box>
-          </Box>
+        <DialogTitle>Crear Rol</DialogTitle>
+        <DialogContent sx={{ width: '90%', height: '100%' }}>
+          <CreateRoleScreen />
         </DialogContent>
-        {/* Dialogo de confirmación para cancelar */}
-        <Dialog open={confirmCancelOpen} onClose={handleCancelReject}>
-          <DialogTitle>¿Desea cerrar el formulario?</DialogTitle>
-          <DialogContent>Se perderán los datos ingresados.</DialogContent>
-          <DialogActions>
-            <Button onClick={handleCancelReject} color="primary">No</Button>
-            <Button onClick={handleCancelConfirm} color="error">Sí</Button>
-          </DialogActions>
-        </Dialog>
+      </Dialog>
+
+      {/* Dialog para editar rol */}
+      <Dialog
+        open={openEditDialog}
+        onClose={() => setOpenEditDialog(false)}
+        maxWidth="md"
+        fullWidth
+        disableEscapeKeyDown
+        sx={{
+          '& .MuiDialog-paper': {
+            width: '50vw',
+            height: '80vh',
+            margin: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        }}
+      >
+        <DialogTitle>Editar Rol</DialogTitle>
+        <DialogContent sx={{ width: '90%', height: '100%' }}>
+          {editRoleId && <EditRoleScreen id={editRoleId} />}
+        </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
@@ -358,7 +255,7 @@ const RolesListScreen: React.FC = () => {
             Eliminar
           </Button>
         </DialogActions>
-  </Dialog>
+      </Dialog>
     </Box>
   );
 };

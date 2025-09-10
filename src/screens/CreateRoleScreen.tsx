@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Box, TextField, Button, Alert } from '@mui/material';
+import { Box, TextField, Button, Alert, CircularProgress } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 
@@ -8,6 +8,7 @@ const CreateRoleScreen: React.FC = () => {
   const [name, setName] = useState('');
   const [errors, setErrors] = useState<{ name?: string; general?: string }>({});
   const [success, setSuccess] = useState('');
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     // Token expiration check
@@ -36,6 +37,7 @@ const CreateRoleScreen: React.FC = () => {
       return;
     }
     try {
+      setProcessing(true);
       const token = localStorage.getItem('token');
       await api.post('/roles', { name: name.trim() }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -50,6 +52,8 @@ const CreateRoleScreen: React.FC = () => {
       } else {
         setErrors({ general: 'No se pudo crear el rol. Verifique los datos e intente nuevamente.' });
       }
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -63,8 +67,27 @@ const CreateRoleScreen: React.FC = () => {
       boxShadow={3}
       borderRadius={2}
       bgcolor="#fff"
-      sx={{ overflowX: "hidden", border: '1px solid #e0e0e0', boxShadow: 3 }}
+      sx={{ overflowX: "hidden", border: '1px solid #e0e0e0', boxShadow: 3, position: 'relative' }}
     >
+      {processing && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            bgcolor: 'rgba(255,255,255,0.7)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            pointerEvents: 'auto',
+          }}
+        >
+          <CircularProgress size={70} color="primary" thickness={5} />
+        </Box>
+      )}
       <form onSubmit={handleSubmit} autoComplete="off">
         <TextField
           type="text"
@@ -83,7 +106,7 @@ const CreateRoleScreen: React.FC = () => {
             color="primary"
             size="medium"
             startIcon={<SaveIcon />}
-            sx={{ minWidth: 120 }}
+            sx={{ minWidth: 120, fontWeight: 'bold' }}
           >
             Guardar
           </Button>
@@ -93,7 +116,7 @@ const CreateRoleScreen: React.FC = () => {
             color="error"
             size="medium"
             startIcon={<CancelIcon />}
-            sx={{ minWidth: 120 }}
+            sx={{ minWidth: 120, fontWeight: 'bold' }}
             onClick={() => window.location.href = '/roles'}
           >
             Cancelar

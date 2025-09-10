@@ -274,7 +274,7 @@ const CreateUserScreen: React.FC<CreateUserScreenProps> = ({
             type="submit"
             size="medium"
             startIcon={<SaveIcon />}
-            sx={{ minWidth: 120 }}
+            sx={{ minWidth: 120, fontWeight: 'bold' }}
           >
             Guardar
           </Button>
@@ -284,7 +284,7 @@ const CreateUserScreen: React.FC<CreateUserScreenProps> = ({
             onClick={() => setConfirmOpen(true)}
             size="medium"
             startIcon={<CancelIcon />}
-            sx={{ minWidth: 120 }}
+            sx={{ minWidth: 120, fontWeight: 'bold' }}
           >
             Cancelar
           </Button>

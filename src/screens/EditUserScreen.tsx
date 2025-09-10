@@ -193,7 +193,7 @@ const EditUserScreen: React.FC<EditUserScreenProps> = ({ id, onSuccess, onCancel
               type="submit"
               size="medium"
               startIcon={<SaveIcon />}
-              sx={{ minWidth: 120 }}
+              sx={{ minWidth: 120, fontWeight: 'bold' }}
             >
               Guardar
             </Button>
@@ -203,7 +203,7 @@ const EditUserScreen: React.FC<EditUserScreenProps> = ({ id, onSuccess, onCancel
               onClick={() => setConfirmOpen(true)}
               size="medium"
               startIcon={<CancelIcon />}
-              sx={{ minWidth: 120 }}
+              sx={{ minWidth: 120, fontWeight: 'bold' }}
             >
               Cancelar
             </Button>
