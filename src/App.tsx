@@ -6,11 +6,18 @@ import EditUserScreen from './screens/EditUserScreen';
 import RolesListScreen from './screens/RolesListScreen';
 import CreateRoleScreen from './screens/CreateRoleScreen';
 import EditRoleScreen from './screens/EditRoleScreen';
+// Eliminado import duplicado
 
 // Wrapper to pass id param to EditUserScreen
 function EditUserScreenWrapper() {
   const { id } = useParams();
   return <EditUserScreen id={id || ''} />;
+}
+
+// Wrapper to pass id param to EditRoleScreen
+function EditRoleScreenWrapper() {
+  const { id } = useParams();
+  return <EditRoleScreen id={id || ''} />;
 }
 function App() {
   return (
@@ -23,7 +30,7 @@ function App() {
         <Route path="/users/:id/edit" element={<EditUserScreenWrapper />} />
         <Route path="/roles" element={<RolesListScreen />} />
         <Route path="/roles/create" element={<CreateRoleScreen />} />
-        <Route path="/roles/:id/edit" element={<EditRoleScreen />} />
+  <Route path="/roles/:id/edit" element={<EditRoleScreenWrapper />} />
       </Routes>
     </Router>
   );
